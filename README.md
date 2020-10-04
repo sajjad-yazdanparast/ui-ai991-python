@@ -1,5 +1,3 @@
-# Python Client
-
 <div dir="rtl">
     
 <strong dir="rtl">فایل `base.py` را دانلود و `import` کنید.</strong>
