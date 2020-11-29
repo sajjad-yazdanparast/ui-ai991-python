@@ -9,6 +9,10 @@ class State:
         self.y = y
         self.parent = parent
         self.action = action
+        if parent:
+            self.path_length = self.parent.path_length + 1
+        else:
+            self.path_length = 0
     
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -27,9 +31,6 @@ class Agent(BaseAgent):
         print(f"MAX TURNS: {self.max_turns}")
         print(f"DECISION TIME LIMIT: {self.decision_time_limit}")
 
-    @staticmethod
-    def find_signs(map, sign):
-        return [(i,j) for i in range(len(map)) for j in range(len(map[i])) if map[i][j] == sign ]
 
     def is_valid_state(self, map, node):
         result = (node.x, node.y)
@@ -39,11 +40,25 @@ class Agent(BaseAgent):
             return False
         return True
 
+    def heuristic(self, frontier, target_position):
+        min_index = 0
+        min_path_length = self.grid_size**2
+        for i in range(len(frontier)):
+            estimation = frontier[i].path_length + \
+             abs(frontier[i].x - target_position[0]) + abs(frontier[i].y - target_position[1])
+            if estimation < min_path_length:
+                min_index = i
+                min_path_length = estimation
+        return frontier.pop(min_index)
+
+
     def find_target(self, map, mode, current_position):
         if mode == 'find_diamond':
             is_target = lambda node: True if map[node.x][node.y].isdigit() else False
+            target_position = [(i,j) for i in range(len(map)) for j in range(len(map[i])) if map[i][j].isdigit()][0]
         elif mode == 'find_base': 
             is_target = lambda node: True if map[node.x][node.y] == self.name.lower() else False
+            target_position = [(i,j) for i in range(len(map)) for j in range(len(map[i])) if map[i][j] == self.name.lower()][0]
 
         node = State(current_position[0], current_position[1])
         if is_target(node):
@@ -56,7 +71,7 @@ class Agent(BaseAgent):
             if not frontier:
                 return None
 
-            node = frontier.pop(0)
+            node = self.heuristic(frontier, target_position)
             explored.append(node)
 
             actions = [
@@ -70,7 +85,7 @@ class Agent(BaseAgent):
                 child_node = State(node.x + action[0], node.y + action[1], node, action[2])
                 if not self.is_valid_state(map, child_node):
                     continue
-                if child_node in explored or child_node in frontier:
+                if (child_node in explored) or (child_node in frontier):
                     continue
                 if is_target(child_node):
                     print('explored ...')
@@ -90,8 +105,6 @@ class Agent(BaseAgent):
                 mode = 'find_base'
             else:
                 mode = 'find_diamond'
-            
-
             start = time.time()
             target_node = self.find_target(turn_data.map, mode, my_current_position)
             end = time.time()
@@ -99,7 +112,7 @@ class Agent(BaseAgent):
 
             if not target_node:
                 return random.choice(list(Action))
-
+            
             self.path = []
             while True:
                 if not target_node.action:
@@ -117,11 +130,9 @@ class Agent(BaseAgent):
         # for row in turn_data.map:
         #     print(''.join(row))
         # action_name = input("> ").upper()
-
         
-
         action_name = self.path.pop()
-        
+        print(action_name)
         if action_name == "U":
             return Action.UP
         if action_name == "D":
