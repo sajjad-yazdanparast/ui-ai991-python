@@ -137,10 +137,10 @@ class Agent(BaseAgent):
             else:
                 x.join(0.8 * self.decision_time_limit)
             
-        elif not self.path:
-            current_thread = [x for x in self.threads if x.is_alive()][0]
-            current_thread.join(0.8 * self.decision_time_limit)
-            print(current_thread.is_alive())
+        # elif not self.path:
+        #     current_thread = [x for x in self.threads if x.is_alive()][0]
+        #     current_thread.join(0.8 * self.decision_time_limit)
+        #     print(current_thread.is_alive())
         
         if not self.path:
             print('timeeeeeeeeeeeeeeeeeeeeee')
