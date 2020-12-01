@@ -1,5 +1,6 @@
 import random
 import time
+import threading
 from base import BaseAgent, TurnData, Action
 
 
@@ -25,6 +26,10 @@ class Agent(BaseAgent):
 
     def __init__(self):
         BaseAgent.__init__(self)
+        self.path = []
+        self.threads = []
+        self.last_Action = None
+        self.mode_start_position = None
         print(f"MY NAME: {self.name}")
         print(f"PLAYER COUNT: {self.agent_count}")
         print(f"GRID SIZE: {self.grid_size}")
@@ -93,46 +98,77 @@ class Agent(BaseAgent):
                     return child_node
                 frontier.append(child_node)
 
+    def fill_path(self, me, turn_data):
+        if me.carrying:
+            mode = 'find_base'
+        else:
+            mode = 'find_diamond'
+        
+        
+
+        start = time.time()
+        target_node = self.find_target(turn_data.map, mode, me.position)
+        end = time.time()
+        print('time spent : ',end - start)
+
+        if not target_node:
+            return random.choice(list(Action))
+
+        
+        while True:
+            if not target_node.action:
+                break
+            self.path.append(target_node.action)
+            target_node = target_node.parent
+    
 
     def do_turn(self, turn_data: TurnData) -> Action:
         for agent in turn_data.agent_data:
             if agent.name == self.name:
-                my_current_position = agent.position
                 me = agent
 
-        if (not hasattr(self, 'path')) or (not self.path):
-            if me.carrying:
-                mode = 'find_base'
-            else:
-                mode = 'find_diamond'
-            start = time.time()
-            target_node = self.find_target(turn_data.map, mode, my_current_position)
-            end = time.time()
-            print('time spent : ',end - start)
-
-            if not target_node:
-                return random.choice(list(Action))
-            
-            self.path = []
-            while True:
-                if not target_node.action:
-                    break
-                self.path.append(target_node.action)
-                target_node = target_node.parent
-
-
-        # print(f"TURN {self.max_turns - turn_data.turns_left}/{self.max_turns}")
-        # for agent in turn_data.agent_data:
-        #     print(f"AGENT {agent.name}")
-        #     print(f"POSITION: {agent.position}")
-        #     print(f"CARRYING: {agent.carrying}")
-        #     print(f"COLLECTED: {agent.collected}")
-        # for row in turn_data.map:
-        #     print(''.join(row))
-        # action_name = input("> ").upper()
+        if not any([t.is_alive() for t in self.threads]) and not self.path:
+            x = threading.Thread(target=self.fill_path, args=(me, turn_data))
+            self.threads.append(x)
+            self.mode_start_position = me.position
+            x.start()
+            if self.decision_time_limit == float('inf'):
+                x.join()
         
+        # if not self.decision_time_limit == float('inf'):
+        #     time.sleep(float(0.5 * self.decision_time_limit))
+        
+        if not self.path:
+            print('timeeeeeeeeeeeeeeeeeeeeee')
+            if self.last_Action == Action.RIGHT:
+                self.last_Action = Action.LEFT
+                print('random left')
+                return Action.LEFT
+            else:
+                self.last_Action = Action.RIGHT
+                print('random right')
+                return Action.RIGHT
+
+        elif self.mode_start_position:
+            print(me.position)
+            print(self.mode_start_position)
+
+            if me.position != self.mode_start_position:
+                if self.last_Action == Action.RIGHT:
+                    self.last_Action = Action.LEFT
+                    self.mode_start_position = None
+                    return Action.LEFT
+                else:
+                    self.last_Action = Action.RIGHT
+                    self.mode_start_position = None
+                    return Action.RIGHT
+            else:
+                self.mode_start_position = None
+        
+            
+
         action_name = self.path.pop()
-        print(action_name)
+        
         if action_name == "U":
             return Action.UP
         if action_name == "D":
@@ -141,7 +177,6 @@ class Agent(BaseAgent):
             return Action.LEFT
         if action_name == "R":
             return Action.RIGHT
-        return random.choice(list(Action))
 
 
 if __name__ == '__main__':
