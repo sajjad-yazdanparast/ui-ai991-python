@@ -45,7 +45,7 @@ class Agent(BaseAgent):
 
 
     def ygy_constraint(self, agent, color) :
-        return color == Diamond.YELLOW and agent.collected[-2] == Diamond.YELLOW and agent.collected[-1] == Diamond.GREEN
+        return len(agent.collected) > 2 and color == Diamond.YELLOW and agent.collected[-2] == Diamond.YELLOW and agent.collected[-1] == Diamond.GREEN
 
     def calculate_diamonds_score(self, agent, turn_data) :
         """
@@ -73,7 +73,7 @@ class Agent(BaseAgent):
         diamond_scores = self.calculate_diamonds_score(agent=agent, turn_data=turn_data)
         sum = 0 
         for score in diamond_scores :
-            sum += score[2] / self.manhatan_dist(x, y, score[0], score[1])
+            sum += score[2] / self.manhatan_dist(x, y, score[0], score[1]) if self.manhatan_dist(x, y, score[0], score[1]) else 0
         
         return sum 
 
@@ -93,11 +93,11 @@ class Agent(BaseAgent):
 
         # self.print_map(turn_data.map)
         # print(turn_data)
-        print(self.__dict__)
-        try :
-            print(self.cell_score(me, turn_data, me.position[0] , me.position[1]+1))
-        except Exception as exc :
-            print('\n\nERROR\n\n')
+        # print(self.__dict__)
+        # try :
+        print(self.cell_score(me, turn_data, me.position[0] , me.position[1]+1))
+        # except Exception as exc :
+        #     print('\n\nERROR\n\n')
         return random.choice([Action.UP,Action.DOWN,Action.LEFT,Action.RIGHT,])
 
 if __name__ == '__main__':
