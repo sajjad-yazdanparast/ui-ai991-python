@@ -52,7 +52,7 @@ class Agent(BaseAgent):
         return a list of tuples in (x, y, score, color)
         each tuple crossponds to a specific diamond
         """
-        output = [(i,j, 0, eval(turn_data.map[i][j])) for i in range(len(turn_data.map)) for j in range(len(turn_data.map[i])) if turn_data.map[i][j].isdigit()]
+        output = [[i,j, 0, eval(turn_data.map[i][j])] for i in range(len(turn_data.map)) for j in range(len(turn_data.map[i])) if turn_data.map[i][j].isdigit()]
 
         for diamond in output :
             diamond[2] += (agent.collected.count(diamond[3]) * 2)  # number of picked diamonds with color d    
