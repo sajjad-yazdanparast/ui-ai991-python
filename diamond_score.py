@@ -22,6 +22,7 @@ class Agent(BaseAgent):
         self.last_Action = None
         self.mode_start_position = None
         self.base_positions = None
+        self.carrying = False
         print(f"MY NAME: {self.name}")
         print(f"PLAYER COUNT: {self.agent_count}")
         print(f"GRID SIZE: {self.grid_size}")
@@ -73,6 +74,20 @@ class Agent(BaseAgent):
     def cell_score(self, agent, turn_data, x, y) :
         diamond_scores = self.calculate_diamonds_score(agent=agent, turn_data=turn_data)
         sum = 0 
+
+        if self.carrying :
+            self.carrying = False
+
+            base_positions = self.find_all_bases(agent, turn_data.map)
+
+            for base in base_positions :
+                score = self.cell_score(agent, turn_data, base[0], base[1]) 
+                distance = self.manhatan_dist(x, y, base[0], base[1])
+                sum += score / distance if distance else score
+
+            self.carrying = True 
+            return sum
+        
         for score in diamond_scores :
             sum += score[2] / self.manhatan_dist(x, y, score[0], score[1]) if self.manhatan_dist(x, y, score[0], score[1]) else score[2]
         
@@ -91,7 +106,7 @@ class Agent(BaseAgent):
                 if not self.base_positions :
                     self.base_positions = self.find_all_bases(me, turn_data.map)
                 
-
+        self.carrying = agent.carrying
         # self.print_map(turn_data.map)
         # print(turn_data)
         # print(self.__dict__)
