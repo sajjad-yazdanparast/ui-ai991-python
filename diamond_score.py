@@ -95,10 +95,48 @@ class Agent(BaseAgent):
         # print(turn_data)
         # print(self.__dict__)
         # try :
-        print(self.cell_score(me, turn_data, me.position[0] , me.position[1]+1))
+        try :
+            up_score = self.cell_score(me, turn_data, me.position[0]-1 , me.position[1])
+        except Exception as exc :
+            up_score = -1 
+            
+        try :
+            down_score = self.cell_score(me, turn_data, me.position[0]+1 , me.position[1])
+        except Exception as exc :
+            down_score = -1 
+        
+        try :
+            left_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]-1)
+        except Exception as exc :
+            left_score = -1 
+        
+        try :
+            right_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]+1)
+        except Exception as exc :
+            right_score = -1 
+        
+        max_score = max([up_score,down_score,left_score,right_score])
+        # print(self.cell_score(me, turn_data, me.position[0] , me.position[1]+1))
         # except Exception as exc :
         #     print('\n\nERROR\n\n')
-        return random.choice([Action.UP,Action.DOWN,Action.LEFT,Action.RIGHT,])
+
+        if max_score == up_score :
+            print(f'> UP, score={up_score}')
+            return Action.UP
+            
+        if max_score == down_score :
+            print(f'> DOWN, score={down_score}')
+            return Action.DOWN
+
+        if max_score == left_score :
+            print(f'> LEFT, score={left_score}')
+            return Action.LEFT
+            
+        if max_score == right_score :
+            print(f'> RIGHT, score={right_score}')
+            return Action.RIGHT
+
+        # return random.choice([Action.UP,Action.DOWN,Action.LEFT,Action.RIGHT,])
 
 if __name__ == '__main__':
     winner = Agent().play()
