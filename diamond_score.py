@@ -55,6 +55,7 @@ class Agent(BaseAgent):
         output = [[i,j, 0, eval(turn_data.map[i][j])] for i in range(len(turn_data.map)) for j in range(len(turn_data.map[i])) if turn_data.map[i][j].isdigit()]
 
         for diamond in output :
+            diamond[2] += (diamond[3]**2 +1) # score of color 
             diamond[2] += (agent.collected.count(diamond[3]) * 2)  # number of picked diamonds with color d    
             diamond[2] += ( agent.count_required[diamond[3]] * -1) # ad
             diamond[2] += ( ( agent.count_required[diamond[3]] - agent.collected.count(diamond[3])) *2) # ad - number of picked diamonds with color d   
@@ -131,7 +132,7 @@ class Agent(BaseAgent):
         if max_score == left_score :
             print(f'> LEFT, score={left_score}')
             return Action.LEFT
-            
+
         if max_score == right_score :
             print(f'> RIGHT, score={right_score}')
             return Action.RIGHT
