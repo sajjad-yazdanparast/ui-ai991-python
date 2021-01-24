@@ -3,7 +3,7 @@ import enum
 import socket
 import struct
 import dataclasses
-
+from typing import List
 
 def read_utf(connection: socket.socket):
     length = struct.unpack('>H', connection.recv(2))[0]
@@ -28,18 +28,28 @@ class AgentData:
     position: tuple
     carrying: int or None
     collected: list
+    score: int
+    count_required: List[int]
 
 
 @dataclasses.dataclass
 class TurnData:
     turns_left: int
-    agent_data: list
+    agent_data: List[AgentData]
     map: list
 
 
 class BaseAgent(metaclass=abc.ABCMeta):
 
     def __init__(self):
+        self.connection = None
+        self.name = None
+        self.agent_count = None
+        self.grid_size = None
+        self.max_turns = None
+        self.decision_time_limit = None
+
+    def connect(self):
         self.connection = socket.socket()
         self.connection.connect(('127.0.0.1', 9921))
         self.name = read_utf(self.connection)
@@ -64,13 +74,19 @@ class BaseAgent(metaclass=abc.ABCMeta):
                 collected = list(map(int, list(info[3])))
             else:
                 collected = []
-            agents.append(AgentData(name, position, carrying, collected))
+            score = int(info[4])
+            reqs = list(map(int, info[5].split(',')))
+            print(reqs)
+            data = AgentData(name, position, carrying, collected, score, reqs)
+            agents.append(data)
         map_data = []
         for _ in range(self.grid_size):
             map_data.append(list(read_utf(self.connection)))
         return TurnData(turns_left, agents, map_data)
 
     def play(self) -> str:
+        if self.connection is None:
+            self.connect()
         while True:
             first_line = read_utf(self.connection)
             if first_line.startswith('WINNER'):
