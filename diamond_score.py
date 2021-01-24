@@ -73,7 +73,7 @@ class Agent(BaseAgent):
         diamond_scores = self.calculate_diamonds_score(agent=agent, turn_data=turn_data)
         sum = 0 
         for score in diamond_scores :
-            sum += score[2] / self.manhatan_dist(x, y, score[0], score[1]) if self.manhatan_dist(x, y, score[0], score[1]) else 0
+            sum += score[2] / self.manhatan_dist(x, y, score[0], score[1]) if self.manhatan_dist(x, y, score[0], score[1]) else score[2]
         
         return sum 
 
