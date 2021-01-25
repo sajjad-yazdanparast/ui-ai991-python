@@ -106,7 +106,7 @@ class Agent(BaseAgent):
                 if not self.base_positions :
                     self.base_positions = self.find_all_bases(me, turn_data.map)
                 
-        self.carrying = agent.carrying
+        self.carrying = me.carrying
         # self.print_map(turn_data.map)
         # print(turn_data)
         # print(self.__dict__)
