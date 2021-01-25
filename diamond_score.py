@@ -59,12 +59,12 @@ class Agent(BaseAgent):
         for diamond in output :
             if diamond[0] == 2 and diamond[1] == 3:
                 print('aaaa')
-            diamond[2] += (2*diamond[3]**2 +1) # score of color 
+            diamond[2] += (diamond[3]**2 +1) # score of color 
             diamond[2] += (agent.collected.count(diamond[3]) * 2)  # number of picked diamonds with color d    
             diamond[2] += ( agent.count_required[diamond[3]] * -1) # ad
             diamond[2] += ( ( agent.count_required[diamond[3]] - agent.collected.count(diamond[3])) *2) # ad - number of picked diamonds with color d   
             base_positions = self.find_all_bases(agent, turn_data.map)
-            diamond[2] += (self.manhatan_dist_to_closest_base(diamond[0], diamond[1], base_positions ) * -10) # manhatan distance to closest base  
+            diamond[2] += (self.manhatan_dist_to_closest_base(diamond[0], diamond[1], base_positions ) * -1) # manhatan distance to closest base  
             diamond[2] += (self.number_of_close_points_in_zone( diamond[0], diamond[1], [(point[0],point[1]) for point in output], 3)*2)
             not_carrying_agents_positions = [other_agent.position for other_agent in turn_data.agent_data if not other_agent.carrying and agent.name != other_agent.name] 
             diamond[2] += (self.number_of_close_points_in_zone(diamond[0], diamond[1], not_carrying_agents_positions ,3)* -20) 
@@ -73,40 +73,6 @@ class Agent(BaseAgent):
                 diamond[2] = 1
 
         return output
-
-    def get_neighbors(self, map, x, y) :
-        neighbors = [] 
-        num_of_walls = 0
-        try :
-            if map[x-1][y] == '*' :
-                num_of_walls += 1 
-                # pass
-            neighbors.append( (x-1, y) )
-        except :
-            pass
-        try :
-            if map[x][y+1] == '*':
-                num_of_walls += 1 
-                # pass
-            neighbors.append( (x, y+1) )
-        except :
-            pass
-        try :
-            if map[x+1][y] == '*':
-                num_of_walls += 1 
-                # pass
-            neighbors.append( (x+1, y) )
-        except :
-            pass
-        try :
-            if map[x][y-1] == '*' :
-                num_of_walls += 1 
-                # pass
-            neighbors.append( (x, y-1) )
-        except :
-            pass    
-        
-        return neighbors , num_of_walls
 
     def is_valid_cell (self, x, y ) :
         return 0 <= x < self.grid_size and  0 <= y < self.grid_size
@@ -151,50 +117,22 @@ class Agent(BaseAgent):
         for node in explored :
             if at(node) =='*' :
                 soorat -= 1/ self.manhatan_dist(x,y , node[0], node[1]) or 1 
+                # soorat +=1 
             else :
                 makhraj += 1 / self.manhatan_dist(x,y , node[0], node[1]) or 1
+                # makhraj +=1 
         
         score = soorat / makhraj or 1 
         # print(score)
         # print(f'\tscore for ({x},{y}) = {score}')
         return score
 
-    def wall_calculation(self, gmap, x, y, depth=4) :
-        is_wall = lambda cell : gmap[cell[0]][cell[1]]=='*'
-        score = 0
-        if is_wall((x,y)) :
-            return 0    # score of wall cell is 0
-        
-        neighbors, _= self.get_neighbors(gmap, x ,y)
-        explored = [(x,y)]
-        while neighbors :
-            if depth == 0 :
-                break 
-            depth -= 1 
-            neighbor = neighbors.pop()
-            explored.append(neighbor)
-            inner_neighbors , num_of_wall = self.get_neighbors(gmap, neighbor[0],neighbor[1])
-            if num_of_wall :
-                dist = self.manhatan_dist(x,y , neighbor[0],neighbor[1])
-                score -= ( (4 -  len(inner_neighbors)) *2 )/dist # num of out of bound cells in neighbors
-                score -= num_of_wall/dist                    # num of wall cells in neighbors
-                for inner_neighbor in inner_neighbors :
-                    # score -= 1 if is_wall(inner_neighbor) else 0 
-                    # if is_wall(inner_neighbor) :
-                    #     score -= 1 
-                    #     continue 
-                    if inner_neighbor not in explored and not is_wall(inner_neighbor) :
-                        neighbors.append(inner_neighbor) 
-                
-
-        # print('\t',score/10)
-        return score/100
 
     def cell_score(self, agent, turn_data, x, y) :
         if not self.is_valid_cell(x,y) or turn_data.map[x][y] == '*':
             return -100    # for walls 
 
-        sum = 2 * self.wall_calculation2(gmap = turn_data.map,x= x, y=y, depth= math.ceil(self.grid_size /2))
+        sum =  self.wall_calculation2(gmap = turn_data.map,x= x, y=y, depth= math.ceil(self.grid_size /2))
         
         # sum = 0
 
