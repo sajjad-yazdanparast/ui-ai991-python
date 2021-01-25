@@ -76,7 +76,7 @@ class BaseAgent(metaclass=abc.ABCMeta):
                 collected = []
             score = int(info[4])
             reqs = list(map(int, info[5].split(',')))
-            print(reqs)
+            # print(reqs)
             data = AgentData(name, position, carrying, collected, score, reqs)
             agents.append(data)
         map_data = []

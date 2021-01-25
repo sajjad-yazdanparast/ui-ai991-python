@@ -1,6 +1,7 @@
 import random
 import time
 import threading
+import math
 from base import BaseAgent, TurnData, Action
 
 
@@ -58,12 +59,12 @@ class Agent(BaseAgent):
         for diamond in output :
             if diamond[0] == 2 and diamond[1] == 3:
                 print('aaaa')
-            diamond[2] += (diamond[3]**2 +1) # score of color 
+            diamond[2] += (2*diamond[3]**2 +1) # score of color 
             diamond[2] += (agent.collected.count(diamond[3]) * 2)  # number of picked diamonds with color d    
             diamond[2] += ( agent.count_required[diamond[3]] * -1) # ad
             diamond[2] += ( ( agent.count_required[diamond[3]] - agent.collected.count(diamond[3])) *2) # ad - number of picked diamonds with color d   
             base_positions = self.find_all_bases(agent, turn_data.map)
-            diamond[2] += (self.manhatan_dist_to_closest_base(diamond[0], diamond[1], base_positions ) * -1) # manhatan distance to closest base  
+            diamond[2] += (self.manhatan_dist_to_closest_base(diamond[0], diamond[1], base_positions ) * -10) # manhatan distance to closest base  
             diamond[2] += (self.number_of_close_points_in_zone( diamond[0], diamond[1], [(point[0],point[1]) for point in output], 3)*2)
             not_carrying_agents_positions = [other_agent.position for other_agent in turn_data.agent_data if not other_agent.carrying and agent.name != other_agent.name] 
             diamond[2] += (self.number_of_close_points_in_zone(diamond[0], diamond[1], not_carrying_agents_positions ,3)* -20) 
@@ -107,8 +108,58 @@ class Agent(BaseAgent):
         
         return neighbors , num_of_walls
 
+    def is_valid_cell (self, x, y ) :
+        return 0 <= x < self.grid_size and  0 <= y < self.grid_size
 
-    def wall_calculation(self, gmap, x, y, depth=3) :
+    def get_neighbors2(self, map, x, y) :
+        neighbors = [] 
+
+        if self.is_valid_cell(x-1,y):
+            neighbors.append( (x-1, y) )
+
+
+        if self.is_valid_cell(x,y+1):
+            neighbors.append( (x, y+1) )
+
+
+        if self.is_valid_cell(x+1,y):
+            neighbors.append( (x+1, y) )
+
+
+        if self.is_valid_cell(x,y-1):
+            neighbors.append( (x, y-1) )
+    
+        
+        return neighbors 
+
+    def DFS (self, gmap, explored, node, depth) :
+        if depth ==0 :
+            return 
+        children = self.get_neighbors2(gmap, node[0], node[1])
+        for child in children :
+            if child not in explored :
+                explored.append(child)
+                self.DFS(gmap,explored,child,depth-1)
+
+        return 
+    def wall_calculation2 (self, gmap, x, y, depth=5) :
+        at = lambda node : gmap[node[0]][node[1]]
+        explored = [(x,y)]
+        self.DFS(gmap, explored, (x,y), depth) 
+        explored.remove((x,y))
+        soorat , makhraj = 0 , 0 
+        for node in explored :
+            if at(node) =='*' :
+                soorat -= 1/ self.manhatan_dist(x,y , node[0], node[1]) or 1 
+            else :
+                makhraj += 1 / self.manhatan_dist(x,y , node[0], node[1]) or 1
+        
+        score = soorat / makhraj or 1 
+        # print(score)
+        # print(f'\tscore for ({x},{y}) = {score}')
+        return score
+
+    def wall_calculation(self, gmap, x, y, depth=4) :
         is_wall = lambda cell : gmap[cell[0]][cell[1]]=='*'
         score = 0
         if is_wall((x,y)) :
@@ -136,14 +187,15 @@ class Agent(BaseAgent):
                         neighbors.append(inner_neighbor) 
                 
 
-        print('\t',score/100)
-        return score
+        # print('\t',score/10)
+        return score/100
 
     def cell_score(self, agent, turn_data, x, y) :
-        if turn_data.map[x][y] == '*':
-            return 0    # for walls 
+        if not self.is_valid_cell(x,y) or turn_data.map[x][y] == '*':
+            return -100    # for walls 
 
-        sum = self.wall_calculation(gmap = turn_data.map,x= x, y=y)
+        sum = 2 * self.wall_calculation2(gmap = turn_data.map,x= x, y=y, depth= math.ceil(self.grid_size /2))
+        
         # sum = 0
 
         if self.carrying :
@@ -174,6 +226,7 @@ class Agent(BaseAgent):
 
 
     def do_turn(self, turn_data: TurnData) -> Action:
+        # turn_data.map[100]
         for agent in turn_data.agent_data:
             if agent.name == self.name:
                 me = agent
@@ -182,25 +235,25 @@ class Agent(BaseAgent):
                 
         self.carrying = me.carrying
 
-        # try :
-        up_score = self.cell_score(me, turn_data, me.position[0]-1 , me.position[1])
-        # except Exception as exc :
-        #     up_score = -1 
+        try :
+            up_score = self.cell_score(me, turn_data, me.position[0]-1 , me.position[1])
+        except Exception as exc :
+            up_score = -1 
             
-        # try :
-        down_score = self.cell_score(me, turn_data, me.position[0]+1 , me.position[1])
-        # except Exception as exc :
-            # down_score = -1 
+        try :
+            down_score = self.cell_score(me, turn_data, me.position[0]+1 , me.position[1])
+        except Exception as exc :
+            down_score = -1 
         
-        # try :
-        left_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]-1)
-        # except Exception as exc :
-            # left_score = -1 
+        try :
+            left_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]-1)
+        except Exception as exc :
+            left_score = -1 
         
-        # try :
-        right_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]+1)
-        # except Exception as exc :
-        #     right_score = -1 
+        try :
+            right_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]+1)
+        except Exception as exc :
+            right_score = -1 
         
         max_score = max([up_score,down_score,left_score,right_score])
         # print(self.cell_score(me, turn_data, me.position[0] , me.position[1]+1))
