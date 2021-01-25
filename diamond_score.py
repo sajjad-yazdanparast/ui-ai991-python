@@ -50,8 +50,8 @@ class Agent(BaseAgent):
 
     def calculate_diamonds_score(self, agent, turn_data) :
         """
-        return a list of tuples in (x, y, score, color)
-        each tuple crossponds to a specific diamond
+        return a list of list in [x, y, score, color] format
+        each inner list corresponds to a specific diamond
         """
         output = [[i,j, 0, eval(turn_data.map[i][j])] for i in range(len(turn_data.map)) for j in range(len(turn_data.map[i])) if turn_data.map[i][j].isdigit()]
 
@@ -73,11 +73,78 @@ class Agent(BaseAgent):
 
         return output
 
+    def get_neighbors(self, map, x, y) :
+        neighbors = [] 
+        num_of_walls = 0
+        try :
+            if map[x-1][y] == '*' :
+                num_of_walls += 1 
+                # pass
+            neighbors.append( (x-1, y) )
+        except :
+            pass
+        try :
+            if map[x][y+1] == '*':
+                num_of_walls += 1 
+                # pass
+            neighbors.append( (x, y+1) )
+        except :
+            pass
+        try :
+            if map[x+1][y] == '*':
+                num_of_walls += 1 
+                # pass
+            neighbors.append( (x+1, y) )
+        except :
+            pass
+        try :
+            if map[x][y-1] == '*' :
+                num_of_walls += 1 
+                # pass
+            neighbors.append( (x, y-1) )
+        except :
+            pass    
+        
+        return neighbors , num_of_walls
+
+
+    def wall_calculation(self, gmap, x, y, depth=3) :
+        is_wall = lambda cell : gmap[cell[0]][cell[1]]=='*'
+        score = 0
+        if is_wall((x,y)) :
+            return 0    # score of wall cell is 0
+        
+        neighbors, _= self.get_neighbors(gmap, x ,y)
+        explored = [(x,y)]
+        while neighbors :
+            if depth == 0 :
+                break 
+            depth -= 1 
+            neighbor = neighbors.pop()
+            explored.append(neighbor)
+            inner_neighbors , num_of_wall = self.get_neighbors(gmap, neighbor[0],neighbor[1])
+            if num_of_wall :
+                dist = self.manhatan_dist(x,y , neighbor[0],neighbor[1])
+                score -= ( (4 -  len(inner_neighbors)) *2 )/dist # num of out of bound cells in neighbors
+                score -= num_of_wall/dist                    # num of wall cells in neighbors
+                for inner_neighbor in inner_neighbors :
+                    # score -= 1 if is_wall(inner_neighbor) else 0 
+                    # if is_wall(inner_neighbor) :
+                    #     score -= 1 
+                    #     continue 
+                    if inner_neighbor not in explored and not is_wall(inner_neighbor) :
+                        neighbors.append(inner_neighbor) 
+                
+
+        print('\t',score/100)
+        return score
+
     def cell_score(self, agent, turn_data, x, y) :
         if turn_data.map[x][y] == '*':
-            return 0
-        diamond_scores = self.calculate_diamonds_score(agent=agent, turn_data=turn_data)
-        sum = 0 
+            return 0    # for walls 
+
+        sum = self.wall_calculation(gmap = turn_data.map,x= x, y=y)
+        # sum = 0
 
         if self.carrying :
             self.carrying = False
@@ -85,7 +152,9 @@ class Agent(BaseAgent):
             base_positions = self.find_all_bases(agent, turn_data.map)
 
             for base in base_positions :
-                score = self.cell_score(agent, turn_data, base[0], base[1]) or 1
+                score = self.cell_score(agent, turn_data, base[0], base[1]) 
+                if score == 0 :
+                    score = 1 
                 distance = self.manhatan_dist(x, y, base[0], base[1])
                 sum += score / distance if distance else score
 
@@ -112,29 +181,26 @@ class Agent(BaseAgent):
                     self.base_positions = self.find_all_bases(me, turn_data.map)
                 
         self.carrying = me.carrying
-        # self.print_map(turn_data.map)
-        # print(turn_data)
-        # print(self.__dict__)
+
         # try :
-        try :
-            up_score = self.cell_score(me, turn_data, me.position[0]-1 , me.position[1])
-        except Exception as exc :
-            up_score = -1 
+        up_score = self.cell_score(me, turn_data, me.position[0]-1 , me.position[1])
+        # except Exception as exc :
+        #     up_score = -1 
             
-        try :
-            down_score = self.cell_score(me, turn_data, me.position[0]+1 , me.position[1])
-        except Exception as exc :
-            down_score = -1 
+        # try :
+        down_score = self.cell_score(me, turn_data, me.position[0]+1 , me.position[1])
+        # except Exception as exc :
+            # down_score = -1 
         
-        try :
-            left_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]-1)
-        except Exception as exc :
-            left_score = -1 
+        # try :
+        left_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]-1)
+        # except Exception as exc :
+            # left_score = -1 
         
-        try :
-            right_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]+1)
-        except Exception as exc :
-            right_score = -1 
+        # try :
+        right_score = self.cell_score(me, turn_data, me.position[0] , me.position[1]+1)
+        # except Exception as exc :
+        #     right_score = -1 
         
         max_score = max([up_score,down_score,left_score,right_score])
         # print(self.cell_score(me, turn_data, me.position[0] , me.position[1]+1))
