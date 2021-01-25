@@ -56,6 +56,8 @@ class Agent(BaseAgent):
         output = [[i,j, 0, eval(turn_data.map[i][j])] for i in range(len(turn_data.map)) for j in range(len(turn_data.map[i])) if turn_data.map[i][j].isdigit()]
 
         for diamond in output :
+            if diamond[0] == 2 and diamond[1] == 3:
+                print('aaaa')
             diamond[2] += (diamond[3]**2 +1) # score of color 
             diamond[2] += (agent.collected.count(diamond[3]) * 2)  # number of picked diamonds with color d    
             diamond[2] += ( agent.count_required[diamond[3]] * -1) # ad
@@ -72,6 +74,9 @@ class Agent(BaseAgent):
         return output
 
     def cell_score(self, agent, turn_data, x, y) :
+        if turn_data.map[x][y] == '*':
+            return 0
+        diamond_scores = self.calculate_diamonds_score(agent=agent, turn_data=turn_data)
         sum = 0 
 
         if self.carrying :
@@ -80,7 +85,7 @@ class Agent(BaseAgent):
             base_positions = self.find_all_bases(agent, turn_data.map)
 
             for base in base_positions :
-                score = self.cell_score(agent, turn_data, base[0], base[1]) 
+                score = self.cell_score(agent, turn_data, base[0], base[1]) or 1
                 distance = self.manhatan_dist(x, y, base[0], base[1])
                 sum += score / distance if distance else score
 
