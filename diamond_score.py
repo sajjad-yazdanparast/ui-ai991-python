@@ -66,13 +66,12 @@ class Agent(BaseAgent):
             not_carrying_agents_positions = [other_agent.position for other_agent in turn_data.agent_data if not other_agent.carrying and agent.name != other_agent.name] 
             diamond[2] += (self.number_of_close_points_in_zone(diamond[0], diamond[1], not_carrying_agents_positions ,3)* -20) 
             diamond[2] += 3 if self.ygy_constraint(agent, diamond[3]) else 0
-            if diamond[2] < 0 :
-                diamond[2] = 0 
+            if diamond[2] <= 0 :
+                diamond[2] = 1
 
         return output
 
     def cell_score(self, agent, turn_data, x, y) :
-        diamond_scores = self.calculate_diamonds_score(agent=agent, turn_data=turn_data)
         sum = 0 
 
         if self.carrying :
@@ -88,6 +87,7 @@ class Agent(BaseAgent):
             self.carrying = True 
             return sum
         
+        diamond_scores = self.calculate_diamonds_score(agent=agent, turn_data=turn_data)
         for score in diamond_scores :
             sum += score[2] / self.manhatan_dist(x, y, score[0], score[1]) if self.manhatan_dist(x, y, score[0], score[1]) else score[2]
         
