@@ -31,4 +31,10 @@ a = [1,2,3]
 # ]
 
 # a[4]
-print(4 or 1 )
+a = (4,6)
+if  0< a[0] <5 :
+    print('avali')
+
+if  8<a[1] <10:
+    print('dovomi')
+# print(1%1 )
